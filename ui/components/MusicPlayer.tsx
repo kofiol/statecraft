@@ -2,43 +2,49 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const FALLBACK_TRACKS = [
-  'https://cdn.pixabay.com/audio/2024/11/28/audio_3e90ab3a5c.mp3',
+const TRACKS = [
+  '/music/ambient-1.mp3',
+  '/music/ambient-2.mp3',
+  '/music/ambient-3.mp3',
 ];
 
 export default function MusicPlayer() {
   const audioRef     = useRef<HTMLAudioElement | null>(null);
-  const tracksRef    = useRef<string[]>(FALLBACK_TRACKS);
-  const isPlayingRef = useRef(false); // source of truth for auto-advance handlers
+  const isPlayingRef = useRef(false);
+  const trackIdxRef  = useRef(0);
   const [playing, setPlaying] = useState(false);
   const [volume, setVolume]   = useState(0.25);
   const [trackIdx, setTrackIdx] = useState(0);
   const [showVolume, setShowVolume] = useState(false);
+
+  // Keep ref in sync with state
+  useEffect(() => { trackIdxRef.current = trackIdx; }, [trackIdx]);
 
   // Create audio element exactly once
   useEffect(() => {
     const audio = new Audio();
     audio.loop   = false;
     audio.volume = 0.25;
+    audio.preload = 'none';
     audioRef.current = audio;
 
-    const advance = (fromIdx: number) => {
-      if (!isPlayingRef.current) return; // user hasn't started playback — stay quiet
-      const tracks = tracksRef.current;
-      const next   = (fromIdx + 1) % tracks.length;
+    const advance = () => {
+      if (!isPlayingRef.current) return;
+      const next = (trackIdxRef.current + 1) % TRACKS.length;
       setTrackIdx(next);
-      audio.src = tracks[next];
+      audio.src = TRACKS[next];
       audio.play().catch(() => {});
     };
 
-    audio.addEventListener('ended', () => advance(trackIdx));
-    audio.addEventListener('error', () => advance(trackIdx));
+    audio.addEventListener('ended', advance);
+    audio.addEventListener('error', advance);
 
     return () => {
+      audio.removeEventListener('ended', advance);
+      audio.removeEventListener('error', advance);
       audio.pause();
       audio.src = '';
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Sync volume
@@ -55,22 +61,21 @@ export default function MusicPlayer() {
       isPlayingRef.current = false;
       setPlaying(false);
     } else {
-      audio.src = tracksRef.current[trackIdx];
+      audio.src = TRACKS[trackIdxRef.current];
       audio.play().catch(() => {});
       isPlayingRef.current = true;
       setPlaying(true);
     }
-  }, [trackIdx]);
+  }, []);
 
   const skip = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    const tracks = tracksRef.current;
-    const next   = (trackIdx + 1) % tracks.length;
+    const next = (trackIdxRef.current + 1) % TRACKS.length;
     setTrackIdx(next);
-    audio.src = tracks[next];
+    audio.src = TRACKS[next];
     if (isPlayingRef.current) audio.play().catch(() => {});
-  }, [trackIdx]);
+  }, []);
 
   return (
     <div

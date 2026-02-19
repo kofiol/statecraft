@@ -312,7 +312,7 @@ export default function LobbyPage() {
                   (e.currentTarget as HTMLAnchorElement).style.background = '#c9a227';
                 }}
               >
-                Watch Demo →
+                Watch Demo — Fortress Europa 1944 →
               </Link>
             </div>
           )}
