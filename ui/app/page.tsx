@@ -6,8 +6,7 @@ import Link from 'next/link';
 import OnboardingModal from '@/components/OnboardingModal';
 import type { Game } from '@/lib/types';
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+const API_BASE = '';
 
 type GamePhase = 'lobby' | 'active' | 'ended' | string;
 
